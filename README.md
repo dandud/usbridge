@@ -45,6 +45,25 @@ sudo chmod +x /opt/usbridge/deploy/update.sh
 sudo /opt/usbridge/deploy/update.sh
 ```
 
+## Docker Deployment (Alternative)
+
+To run USBridge in an isolated container environment utilizing Docker Compose, you can utilize the provided configuration logic.
+
+**Prerequisites:**
+Docker requires your host Linux machine to load the `usbip` kernel modules beforehand since the container connects natively directly to them. Run:
+```bash
+sudo modprobe usbip-core
+sudo modprobe usbip-host
+```
+
+**Starting the Container:**
+Initialize the data files before launching so Docker mounts them natively as target files instead of new directories:
+```bash
+touch config.json usbridge.log
+docker-compose up -d --build
+```
+*(Note: the container image requires `privileged` system mode and host networking to appropriately bridge `/sys/bus/usb` into the application network.)*
+
 ## Manual Setup & Development
 
 To run the application manually or develop on a non-Linux system (where USBIP bindings are mocked for testing scenarios):
