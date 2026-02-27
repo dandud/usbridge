@@ -1,0 +1,16 @@
+[Unit]
+Description=USBridge - USB over IP Web Manager
+After=network.target network-online.target
+
+[Service]
+Type=simple
+User=root
+# We run as root by default because the usbip commands often require elevated permissions to bind/unbind hardware.
+WorkingDirectory=/opt/usbridge
+ExecStart=/opt/usbridge/venv/bin/python main.py
+Restart=on-failure
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

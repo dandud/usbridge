@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USBridge Manager</title>
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Login Screen -->
+        <div id="login-view" class="view hidden">
+            <div class="glass-card login-card">
+                <div class="logo">
+                    <img src="/static/usbridge_logo.png" alt="USBridge Logo" style="height: 32px; border-radius: 6px;">
+                    <h2>USBridge</h2>
+                </div>
+                <form id="login-form">
+                    <div class="input-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-full">Sign In</button>
+                    <p id="login-error" class="error-msg hidden"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div id="dashboard-view" class="view hidden">
+            <header class="glass-header">
+                <div class="logo">
+                    <i data-lucide="cpu"></i>
+                    <h1>USBridge</h1>
+                </div>
+                <nav class="nav-tabs">
+                    <button class="tab-btn active" data-target="devices-section">
+                        <i data-lucide="usb"></i> Devices
+                    </button>
+                    <button class="tab-btn" data-target="settings-section">
+                        <i data-lucide="settings"></i> Settings
+                    </button>
+                    <button class="tab-btn" data-target="logs-section">
+                        <i data-lucide="terminal"></i> Logs
+                    </button>
+                    <button id="logout-btn" class="btn btn-ghost" title="Logout">
+                        <i data-lucide="log-out"></i>
+                    </button>
+                </nav>
+            </header>
+
+            <main class="main-content">
+                <!-- Devices Section -->
+                <section id="devices-section" class="tab-content active">
+                    <div class="section-header">
+                        <h2>Connected USB Devices</h2>
+                        <button id="refresh-devices-btn" class="btn btn-secondary">
+                            <i data-lucide="refresh-cw"></i> Refresh
+                        </button>
+                    </div>
+
+                    <div id="device-list" class="device-grid">
+                        <!-- Devices populated by JS -->
+                        <div class="loading-state">
+                            <i data-lucide="loader" class="spin"></i> Loading devices...
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settings-section" class="tab-content hidden">
+                    <div class="glass-card settings-card">
+                        <h2>Application Settings</h2>
+
+                        <form id="config-form">
+                            <div class="settings-group">
+                                <h3>Authentication</h3>
+                                <label class="toggle-container">
+                                    <span class="toggle-label">Require Login</span>
+                                    <input type="checkbox" id="auth_enabled">
+                                    <span class="slider"></span>
+                                </label>
+
+                                <div class="input-group">
+                                    <label for="config_username">Username</label>
+                                    <input type="text" id="config_username">
+                                </div>
+                                <div class="input-group">
+                                    <label for="config_password">New Password (leave blank to keep current)</label>
+                                    <input type="password" id="config_password">
+                                </div>
+                            </div>
+
+                            <div class="settings-group">
+                                <h3>System</h3>
+                                <div class="input-group">
+                                    <label for="app_port">Application Port (Requires restart to apply)</label>
+                                    <input type="number" id="app_port" min="1024" max="65535" required>
+                                </div>
+                                <div class="input-group">
+                                    <label for="log_level">Log Level</label>
+                                    <select id="log_level">
+                                        <option value="DEBUG">Debug</option>
+                                        <option value="INFO">Info</option>
+                                        <option value="WARN">Warning</option>
+                                        <option value="ERROR">Error</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="action-bar">
+                                <button type="submit" class="btn btn-primary">Save Settings</button>
+                                <p id="config-msg" class="success-msg hidden">Settings saved successfully</p>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Logs Section -->
+                <section id="logs-section" class="tab-content hidden">
+                    <div class="section-header">
+                        <h2>Audit Logs</h2>
+                        <button id="refresh-logs-btn" class="btn btn-secondary">
+                            <i data-lucide="refresh-cw"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="glass-card log-container">
+                        <pre id="log-output">Loading logs...</pre>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">
+        <i data-lucide="info"></i>
+        <span id="toast-msg">Notification message</span>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+
+</html>
