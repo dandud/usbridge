@@ -114,19 +114,23 @@ class UsbIpManager:
             )
             return devices
 
-        # Get the definitive list of currently bound devices directly from the kernel driver
+        # Get the definitive list of currently bound devices by securely parsing usbip list -l
         bound_busids = set()
-        match_file = "/sys/bus/usb/drivers/usbip-host/match_busid"
-        if os.path.exists(match_file):
-            try:
-                with open(match_file, "r") as f:
-                    content = f.read().strip()
-                    if content:
-                        # contents are usually space or newline separated
-                        parts = content.replace('\n', ' ').split()
-                        bound_busids.update(parts)
-            except Exception:
-                pass
+        try:
+            list_output = subprocess.run(
+                ["usbip", "list", "-l"], capture_output=True, text=True
+            ).stdout
+            
+            current_busid = None
+            for line in list_output.splitlines():
+                if "busid" in line:
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        current_busid = parts[2]
+                elif current_busid and "usbip-host" in line:
+                    bound_busids.add(current_busid)
+        except Exception:
+            pass
 
         for entry in os.listdir(base_dir):
             # USB devices usually look like "1-1", "2-1.4", not "usb1"
