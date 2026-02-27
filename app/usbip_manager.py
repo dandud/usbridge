@@ -110,15 +110,9 @@ class UsbIpManager:
 
         if not os.path.exists(base_dir):
             app_logger.warning(
-                "sysfs usb directory not found. Are we on Windows/Mac without mocking?"
+                "sysfs usb directory not found. Returning empty list."
             )
-            # For development, return mock devices if we are not on linux
-            config = config_store.load()
-            auto_binds = config.get("auto_bind_devices", [])
-            for d in self.mock_devices:
-                if d["busid"] in auto_binds:
-                    d["bound"] = True
-            return self.mock_devices
+            return devices
 
         # Get bound items from `usbip list -l` for accurate bound status
         bound_busids = set()
