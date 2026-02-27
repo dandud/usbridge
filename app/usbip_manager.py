@@ -116,19 +116,7 @@ class UsbIpManager:
 
         # Get bound items from `usbip list -l` for accurate bound status
         bound_busids = set()
-        try:
-            list_output = subprocess.run(
-                ["usbip", "list", "-l"], capture_output=True, text=True
-            ).stdout
-            for line in list_output.splitlines():
-                if "busid" in line:
-                    parts = line.split()
-                    if len(parts) >= 3:
-                        busid = parts[2]
-                        bound_busids.add(busid)
-        except Exception:
-            pass
-
+        # Instead of parsing usbip list -l, we check the driver symlink in sysfs
         for entry in os.listdir(base_dir):
             # USB devices usually look like "1-1", "2-1.4", not "usb1"
             if "-" not in entry or entry.startswith("usb"):
@@ -155,7 +143,20 @@ class UsbIpManager:
             if manufacturer:
                 name = f"{manufacturer} {product}"
 
-            is_bound = entry in bound_busids
+            # Check if bound to usbip-host by looking at interface drivers
+            is_bound = False
+            try:
+                # Interfaces are subdirectories like "1-1:1.0"
+                for sub_entry in os.listdir(dev_path):
+                    if sub_entry.startswith(f"{entry}:"):
+                        driver_link = os.path.join(dev_path, sub_entry, "driver")
+                        if os.path.islink(driver_link):
+                            driver_target = os.readlink(driver_link)
+                            if "usbip-host" in driver_target:
+                                is_bound = True
+                                break
+            except Exception:
+                pass
 
             devices.append({"busid": entry, "name": name, "bound": is_bound})
 
