@@ -114,9 +114,20 @@ class UsbIpManager:
             )
             return devices
 
-        # Get bound items from `usbip list -l` for accurate bound status
+        # Get the definitive list of currently bound devices directly from the kernel driver
         bound_busids = set()
-        # Instead of parsing usbip list -l, we check the driver symlink in sysfs
+        match_file = "/sys/bus/usb/drivers/usbip-host/match_busid"
+        if os.path.exists(match_file):
+            try:
+                with open(match_file, "r") as f:
+                    content = f.read().strip()
+                    if content:
+                        # contents are usually space or newline separated
+                        parts = content.replace('\n', ' ').split()
+                        bound_busids.update(parts)
+            except Exception:
+                pass
+
         for entry in os.listdir(base_dir):
             # USB devices usually look like "1-1", "2-1.4", not "usb1"
             if "-" not in entry or entry.startswith("usb"):
@@ -143,20 +154,8 @@ class UsbIpManager:
             if manufacturer:
                 name = f"{manufacturer} {product}"
 
-            # Check if bound to usbip-host by looking at interface drivers
-            is_bound = False
-            try:
-                # Interfaces are subdirectories like "1-1:1.0"
-                for sub_entry in os.listdir(dev_path):
-                    if sub_entry.startswith(f"{entry}:"):
-                        driver_link = os.path.join(dev_path, sub_entry, "driver")
-                        if os.path.islink(driver_link):
-                            driver_target = os.readlink(driver_link)
-                            if "usbip-host" in driver_target:
-                                is_bound = True
-                                break
-            except Exception:
-                pass
+            # Check if bound to usbip-host by looking at the match_busid set
+            is_bound = entry in bound_busids
 
             devices.append({"busid": entry, "name": name, "bound": is_bound})
 
