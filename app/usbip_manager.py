@@ -48,6 +48,9 @@ class UsbIpManager:
                     break
         else:
             try:
+                # Pre-emptively flush any kernel match_busid ghosts before binding
+                subprocess.run(["usbip", "unbind", "-b", busid], capture_output=True)
+
                 subprocess.run(
                     ["usbip", "bind", "-b", busid], check=True, capture_output=True
                 )
@@ -77,12 +80,14 @@ class UsbIpManager:
                     break
         else:
             try:
+                # We do not enforce check=True here because unbinding a ghost device 
+                # might throw a minor CLI error but still successfully flush the kernel.
                 subprocess.run(
-                    ["usbip", "unbind", "-b", busid], check=True, capture_output=True
+                    ["usbip", "unbind", "-b", busid], capture_output=True
                 )
                 success = True
-            except subprocess.CalledProcessError as e:
-                app_logger.error(f"Error unbinding device {busid}: {e.stderr}")
+            except Exception as e:
+                app_logger.error(f"Failed to execute unbind command for {busid}: {e}")
                 return False
 
         if success:
