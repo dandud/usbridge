@@ -89,6 +89,7 @@ class Device(BaseModel):
     busid: str = Field(description="The USB bus ID (e.g., '1-1')")
     name: str = Field(description="A human-readable name or description of the device")
     bound: bool = Field(description="Whether the device is currently bound to usbip")
+    attached: bool = Field(description="Whether a remote client is actively connected to this device")
 
 
 class DevicesResponse(BaseModel):
