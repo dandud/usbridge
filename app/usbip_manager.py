@@ -119,24 +119,6 @@ class UsbIpManager:
             )
             return devices
 
-        # Get the definitive list of currently bound devices by securely parsing usbip list -l
-        bound_busids = set()
-        try:
-            list_output = subprocess.run(
-                ["usbip", "list", "-l"], capture_output=True, text=True
-            ).stdout
-            
-            current_busid = None
-            for line in list_output.splitlines():
-                if "busid" in line:
-                    parts = line.split()
-                    if len(parts) >= 3:
-                        current_busid = parts[2]
-                elif current_busid and "usbip-host" in line:
-                    bound_busids.add(current_busid)
-        except Exception:
-            pass
-
         for entry in os.listdir(base_dir):
             # USB devices usually look like "1-1", "2-1.4", not "usb1"
             if "-" not in entry or entry.startswith("usb"):
@@ -163,8 +145,17 @@ class UsbIpManager:
             if manufacturer:
                 name = f"{manufacturer} {product}"
 
-            # Check if bound to usbip-host by looking at the match_busid set
-            is_bound = entry in bound_busids
+            # On Debian 12, the definitive way to check if a device is bound is to check 
+            # if the fundamental device itself (not an intra-interface) is bound to usbip-host
+            is_bound = False
+            driver_link = os.path.join(dev_path, "driver")
+            if os.path.islink(driver_link):
+                try:
+                    driver_target = os.readlink(driver_link)
+                    if "usbip-host" in driver_target:
+                        is_bound = True
+                except Exception:
+                    pass
 
             devices.append({"busid": entry, "name": name, "bound": is_bound})
 
