@@ -9,6 +9,7 @@
     --border: rgba(255, 255, 255, 0.1);
     --success: #10b981;
     --danger: #ef4444;
+    --warning: #f59e0b;
     --glass-blur: 12px;
 }
 
@@ -137,6 +138,17 @@ body {
 
 .btn-danger:hover {
     background: var(--danger);
+    color: white;
+}
+
+.btn-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.btn-warning:hover {
+    background: var(--warning);
     color: white;
 }
 

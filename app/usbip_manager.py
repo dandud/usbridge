@@ -29,9 +29,12 @@ class UsbIpManager:
         if self.is_windows:
             config = config_store.load()
             auto_binds = config.get("auto_bind_devices", [])
+            nicknames = config.get("nicknames", {})
             for d in self.mock_devices:
                 if d["busid"] in auto_binds:
                     d["bound"] = True
+                if d["busid"] in nicknames and nicknames[d["busid"]]:
+                    d["name"] = nicknames[d["busid"]]
             return self.mock_devices
 
         # Real Linux implementation using sysfs
@@ -100,6 +103,23 @@ class UsbIpManager:
             return True
         return False
 
+    def force_disconnect_device(self, busid: str) -> bool:
+        """Forcefully disconnect a remote client by unbinding and immediately rebinding."""
+        if self.is_windows:
+            self.unbind_device(busid)
+            self.bind_device(busid)
+            return True
+        else:
+            try:
+                subprocess.run(["usbip", "unbind", "-b", busid], capture_output=True)
+                subprocess.run(
+                    ["usbip", "bind", "-b", busid], check=True, capture_output=True
+                )
+                return True
+            except subprocess.CalledProcessError as e:
+                app_logger.error(f"Error force disconnecting device {busid}: {e.stderr}")
+                return False
+
     def apply_auto_binds(self):
         """Called on startup to re-bind configured devices."""
         config = config_store.load()
@@ -144,6 +164,11 @@ class UsbIpManager:
             name = product
             if manufacturer:
                 name = f"{manufacturer} {product}"
+
+            config = config_store.load()
+            nicknames = config.get("nicknames", {})
+            if entry in nicknames and nicknames[entry]:
+                name = nicknames[entry]
 
             # On Debian 12, the definitive way to check if a device is bound is to check 
             # if the fundamental device itself (not an intra-interface) is bound to usbip-host

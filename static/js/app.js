@@ -236,20 +236,33 @@ async function loadDevices() {
             container.innerHTML = `<div class="loading-state"><i data-lucide="usb" style="width:48px;height:48px;opacity:0.5;margin-bottom:1rem"></i>No USB devices found</div>`;
         } else {
             container.innerHTML = data.devices.map(dev => {
-                const actionBtn = dev.bound
+                let actionBtn = dev.bound
                     ? `<button class="btn btn-danger" onclick="unbindDevice('${dev.busid}')"><i data-lucide="link-2-off"></i> Unbind</button>`
                     : `<button class="btn btn-success" onclick="bindDevice('${dev.busid}')"><i data-lucide="link-2"></i> Bind</button>`;
+
+                if (dev.bound && dev.attached) {
+                    actionBtn = `<button class="btn btn-warning" onclick="disconnectDevice('${dev.busid}')" style="margin-right: 8px;"><i data-lucide="zap-off"></i> Disconnect</button>` + actionBtn;
+                }
 
                 let snippetHtml = '';
                 if (dev.bound) {
                     const hostname = window.location.hostname;
-                    const command = `usbip attach --remote ${hostname} --busid ${dev.busid}`;
+                    const linuxCmd = `usbip attach --remote ${hostname} --busid ${dev.busid}`;
+                    const winCmd = `usbipd attach --host ${hostname} --busid ${dev.busid}`;
                     snippetHtml = `
-                        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.1); border-radius: 6px; font-family: monospace; font-size: 0.85em; display: flex; justify-content: space-between; align-items: center;">
-                            <span>${command}</span>
-                            <button class="btn btn-secondary" style="padding: 4px 8px; min-width: auto" title="Copy Client Command" onclick="copyToClipboard('${command}')">
-                                <i data-lucide="copy"></i>
-                            </button>
+                        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.1); border-radius: 6px; font-family: monospace; font-size: 0.85em; display: flex; flex-direction: column; gap: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span><span style="color: var(--text-muted); font-size: 0.8em; margin-right: 8px;">Linux</span> ${linuxCmd}</span>
+                                <button class="btn btn-secondary" style="padding: 4px 8px; min-width: auto" title="Copy Linux Command" onclick="copyToClipboard('${linuxCmd}')">
+                                    <i data-lucide="copy"></i>
+                                </button>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span><span style="color: var(--text-muted); font-size: 0.8em; margin-right: 8px;">Windows</span> ${winCmd}</span>
+                                <button class="btn btn-secondary" style="padding: 4px 8px; min-width: auto" title="Copy Windows Command" onclick="copyToClipboard('${winCmd}')">
+                                    <i data-lucide="copy"></i>
+                                </button>
+                            </div>
                         </div>
                     `;
                 }
@@ -258,7 +271,12 @@ async function loadDevices() {
                 <div class="device-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
                         <div class="device-info" style="flex: 1; min-width: 0;">
-                            <h3 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${dev.name}">${dev.name}</h3>
+                            <h3 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 8px;" title="${dev.name}">
+                                ${dev.name}
+                                <button class="btn btn-ghost" style="padding: 2px; height: auto; min-width: auto;" onclick="editNickname('${dev.busid}', '${dev.name.replace(/'/g, "\\'")}')" title="Edit Nickname">
+                                    <i data-lucide="edit-3" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
+                                </button>
+                            </h3>
                             <div class="device-meta" style="display: flex; align-items: center; gap: 10px;">
                                 <span><i data-lucide="hash"></i> ID: ${dev.busid}</span>
                                 ${dev.attached ? '<span style="color: var(--success); background: rgba(16, 185, 129, 0.1); padding: 2px 8px; border-radius: 4px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; font-size: 0.85em;"><i data-lucide="plug-zap" style="width:14px;height:14px;"></i> Active Connection</span>' : ''}
@@ -325,6 +343,47 @@ window.unbindDevice = async (busid) => {
             loadDevices();
         } else {
             showToast(`Failed to unbind device ${busid}`, true);
+        }
+    } catch (e) {
+        showToast("Connection error", true);
+    }
+};
+
+window.disconnectDevice = async (busid) => {
+    try {
+        const res = await fetch('/api/devices/disconnect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ busid })
+        });
+        if (res.ok) {
+            showToast(`Successfully disconnected client from ${busid}`);
+            loadDevices();
+        } else {
+            showToast(`Failed to disconnect client from ${busid}`, true);
+        }
+    } catch (e) {
+        showToast("Connection error", true);
+    }
+};
+
+window.editNickname = async (busid, currentName) => {
+    let newName = prompt(`Enter a custom nickname for device ${busid}:`, currentName);
+    if (newName === null) return; // User cancelled
+
+    newName = newName.trim();
+
+    try {
+        const res = await fetch('/api/devices/nickname', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ busid, nickname: newName })
+        });
+        if (res.ok) {
+            showToast(`Nickname updated for ${busid}`);
+            loadDevices();
+        } else {
+            showToast(`Failed to update nickname for ${busid}`, true);
         }
     } catch (e) {
         showToast("Connection error", true);

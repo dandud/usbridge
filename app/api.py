@@ -63,6 +63,11 @@ class DeviceActionRequest(BaseModel):
     busid: str = Field(description="The USB bus ID of the device (e.g., '1-1')")
 
 
+class DeviceNicknameRequest(BaseModel):
+    busid: str = Field(description="The USB bus ID of the device (e.g., '1-1')")
+    nickname: str = Field(description="The custom nickname for the device (empty to clear)")
+
+
 class ConfigUpdateRequest(BaseModel):
     auth_enabled: bool = Field(
         description="Whether authentication is required to access the API and UI"
@@ -205,6 +210,43 @@ async def unbind_device(req: DeviceActionRequest) -> StatusResponse:
         return StatusResponse(status="success")
     app_logger.error(f"Failed to unbind USB device {req.busid}.")
     raise HTTPException(status_code=500, detail="Failed to unbind device")
+
+
+@api_router.post(
+    "/devices/disconnect",
+    dependencies=[Depends(verify_session)],
+    response_model=StatusResponse,
+    summary="Force disconnect a client from a USB device",
+)
+async def disconnect_device(req: DeviceActionRequest) -> StatusResponse:
+    """Forcefully disconnects a remote client by unbinding and rebinding the device."""
+    success = usbip_manager.force_disconnect_device(req.busid)
+    if success:
+        app_logger.info(f"Successfully force-disconnected client from USB device {req.busid}.")
+        await ws_manager.broadcast({"type": "device_change"})
+        return StatusResponse(status="success")
+    app_logger.error(f"Failed to force-disconnect client from USB device {req.busid}.")
+    raise HTTPException(status_code=500, detail="Failed to force-disconnect device")
+
+
+@api_router.post(
+    "/devices/nickname",
+    dependencies=[Depends(verify_session)],
+    response_model=StatusResponse,
+    summary="Set a custom nickname for a USB device",
+)
+async def set_device_nickname(req: DeviceNicknameRequest) -> StatusResponse:
+    """Saves a custom nickname for a specific USB bus ID to persistent config."""
+    config = config_store.load()
+    if "nicknames" not in config:
+        config["nicknames"] = {}
+    config["nicknames"][req.busid] = req.nickname
+    if config_store.save(config):
+        app_logger.info(f"Successfully updated nickname for device {req.busid}.")
+        await ws_manager.broadcast({"type": "device_change"})
+        return StatusResponse(status="success")
+    app_logger.error(f"Failed to save nickname for device {req.busid}.")
+    raise HTTPException(status_code=500, detail="Failed to save nickname")
 
 
 # --- Config ---

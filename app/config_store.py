@@ -22,6 +22,7 @@ DEFAULT_CONFIG = {
     "log_level": "INFO",
     "app_port": 8000,
     "auto_bind_devices": [],
+    "nicknames": {},
 }
 
 
@@ -54,6 +55,9 @@ class ConfigStore:
                 needs_save = True
             if "auto_bind_devices" not in data:
                 data["auto_bind_devices"] = []
+                needs_save = True
+            if "nicknames" not in data:
+                data["nicknames"] = {}
                 needs_save = True
 
             if needs_save:

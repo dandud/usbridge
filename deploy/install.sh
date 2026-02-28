@@ -18,13 +18,22 @@ echo "usbip-host" > /etc/modules-load.d/usbip.conf
 # Install dependencies
 echo "Installing system dependencies..."
 apt-get update
-apt-get install -y usbip hwdata python3-venv
+apt-get install -y usbip hwdata python3-venv git
 
 # Setup directory
-echo "Copying application files..."
+echo "Deploying application files..."
 mkdir -p /opt/usbridge
-cp -R ./* /opt/usbridge/
+
+if [ "$PWD" != "/opt/usbridge" ]; then
+    cp -R ./* /opt/usbridge/
+fi
+
 cd /opt/usbridge
+
+if [ -d ".git" ]; then
+    echo "Updating repository..."
+    git pull origin main || echo "Git pull warning. Proceeding anyway."
+fi
 
 # Setup Python environment
 echo "Setting up Python virtual environment..."
