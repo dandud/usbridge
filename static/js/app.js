@@ -345,10 +345,11 @@ window.copyToClipboard = async (text) => {
         const textArea = document.createElement("textarea");
         textArea.value = text;
 
-        // Prevent scrolling to bottom
-        textArea.style.top = "0";
-        textArea.style.left = "0";
+        // Prevent scrolling to bottom and hide from view
+        textArea.style.top = "-9999px";
+        textArea.style.left = "-9999px";
         textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
 
         document.body.appendChild(textArea);
         textArea.focus();
