@@ -247,7 +247,7 @@ async function loadDevices() {
                     snippetHtml = `
                         <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(0,0,0,0.1); border-radius: 6px; font-family: monospace; font-size: 0.85em; display: flex; justify-content: space-between; align-items: center;">
                             <span>${command}</span>
-                            <button class="btn btn-secondary" style="padding: 4px 8px; min-width: auto" title="Copy Client Command" onclick="navigator.clipboard.writeText('${command}'); showToast('Command copied to clipboard!');">
+                            <button class="btn btn-secondary" style="padding: 4px 8px; min-width: auto" title="Copy Client Command" onclick="copyToClipboard('${command}')">
                                 <i data-lucide="copy"></i>
                             </button>
                         </div>
@@ -332,6 +332,43 @@ window.unbindDevice = async (busid) => {
 };
 
 // Utilities
+window.copyToClipboard = async (text) => {
+    if (navigator.clipboard && window.isSecureContext) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast('Command copied to clipboard!');
+        } catch (err) {
+            showToast('Failed to copy command', true);
+        }
+    } else {
+        // Fallback for non-secure contexts (HTTP over IP)
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+
+        // Prevent scrolling to bottom
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showToast('Command copied to clipboard!');
+            } else {
+                showToast('Failed to copy command', true);
+            }
+        } catch (err) {
+            showToast('Failed to copy command', true);
+        }
+
+        document.body.removeChild(textArea);
+    }
+};
+
 function showView(viewName) {
     Object.values(views).forEach(v => v.classList.add('hidden'));
     views[viewName].classList.remove('hidden');
