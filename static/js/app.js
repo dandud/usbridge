@@ -259,8 +259,9 @@ async function loadDevices() {
                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
                         <div class="device-info" style="flex: 1; min-width: 0;">
                             <h3 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${dev.name}">${dev.name}</h3>
-                            <div class="device-meta">
+                            <div class="device-meta" style="display: flex; align-items: center; gap: 10px;">
                                 <span><i data-lucide="hash"></i> ID: ${dev.busid}</span>
+                                ${dev.attached ? '<span style="color: var(--success); background: rgba(16, 185, 129, 0.1); padding: 2px 8px; border-radius: 4px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; font-size: 0.85em;"><i data-lucide="plug-zap" style="width:14px;height:14px;"></i> Active Connection</span>' : ''}
                             </div>
                         </div>
                         <div style="flex-shrink: 0;">

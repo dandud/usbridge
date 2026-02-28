@@ -148,16 +148,27 @@ class UsbIpManager:
             # On Debian 12, the definitive way to check if a device is bound is to check 
             # if the fundamental device itself (not an intra-interface) is bound to usbip-host
             is_bound = False
+            is_attached = False
             driver_link = os.path.join(dev_path, "driver")
             if os.path.islink(driver_link):
                 try:
                     driver_target = os.readlink(driver_link)
                     if "usbip-host" in driver_target:
                         is_bound = True
+                        
+                        # Check if actively attached to a client over the network
+                        status_file = os.path.join(dev_path, "usbip_status")
+                        if os.path.exists(status_file):
+                            try:
+                                with open(status_file, "r") as sf:
+                                    if sf.read().strip() == "2":
+                                        is_attached = True
+                            except Exception:
+                                pass
                 except Exception:
                     pass
 
-            devices.append({"busid": entry, "name": name, "bound": is_bound})
+            devices.append({"busid": entry, "name": name, "bound": is_bound, "attached": is_attached})
 
         return devices
 
