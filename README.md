@@ -19,8 +19,8 @@ It allows you to bind local USB devices and expose them across your local networ
 * **Real-time Updates**: WebSockets push device state changes and service logs to the dashboard.
 * **Security**: Optional password authentication utilizing SHA256 hashed storage.
 * **Connection Snippets**: The UI generates the necessary client connection commands for copy-pasting for both Linux (`usbip`) and Windows (`usbipd-win`).
-* **Custom Device Nicknames**: Override clunky hardware strings with memorable aliases (e.g., "Home Assistant Zigbee") persistently.
-* **Force-Disconnect**: Instantly sever stuck remote client socket connections right from the dashboard with a single click.
+* **Custom Device Nicknames**: Override hardware strings with memorable aliases (e.g., "Home Assistant Zigbee") persistently.
+* **Force-Disconnect**: Sever stuck remote client socket connections right from the dashboard with a single click.
 
 ## Installation (Raspberry Pi / Linux)
 

@@ -19,6 +19,7 @@ usbridge.log
 # IDE setup
 .vscode/
 .idea/
+*.code-workspace
 
 # OS specific
 .DS_Store
